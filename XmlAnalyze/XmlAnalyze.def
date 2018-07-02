@@ -1,0 +1,6 @@
+LIBRARY	"XmlAnalyze"
+
+ImportCheckXml @1
+ReadConfigDb @2
+initDb @3
+uninitDb @4
