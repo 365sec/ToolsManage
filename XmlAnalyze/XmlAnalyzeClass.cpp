@@ -1497,7 +1497,7 @@ int CXmlAnalyzeClass::ImportCheckXml(char* xmlfile, char* htmlpath, int type)
 		}
 	}
 
-	DBexecute(con, "UPDATE t_plan_tool SET tool_Result_Xml_Path = '%s', tool_Result_Html_Path='%s', tool_Result=1 , errorcode=%d  WHERE plan_Guid ='%s' AND asset_Guid ='%s' AND tool_Type='%s';",
+	DBexecute(con, "UPDATE t_plan_tool SET tool_Result_Xml_Path = '%s', tool_Result_Html_Path='%s', tool_Result=1 , errorcode=%d , notice=0 WHERE plan_Guid ='%s' AND asset_Guid ='%s' AND tool_Type='%s';",
 		xmlfile, htmlfile, nErr, xmlToolInfo.strPlanGuid, xmlToolInfo.strAssetGuid, xmlToolInfo.toolTypeStr);
 
 	root->Clear();
