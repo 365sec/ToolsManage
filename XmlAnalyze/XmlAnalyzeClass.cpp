@@ -269,7 +269,34 @@ void CXmlAnalyzeClass::StrtokCode(XmlToolInfo& xmlToolInfo)
 	}
 }
 
-void CXmlAnalyzeClass::selectChildNode(TiXmlNode* pNode)  
+//utf_8转gb2312
+
+char* CXmlAnalyzeClass::ConvertUtf8ToGBK(const char* strUtf8, char* str) 
+{
+	int len=MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)strUtf8, -1, NULL,0);
+	unsigned short * wszGBK = new unsigned short[len+1];
+	memset(wszGBK, 0, len * 2 + 2);
+	MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)strUtf8, -1, (LPWSTR)wszGBK, len);
+
+	len = WideCharToMultiByte(CP_ACP, 0, (LPWSTR)wszGBK, -1, NULL, 0, NULL, NULL);
+	char *szGBK=new char[len + 1];
+	memset(szGBK, 0, len + 1);
+	WideCharToMultiByte (CP_ACP, 0, (LPWSTR)wszGBK, -1, szGBK, len, NULL,NULL);
+	strUtf8 = szGBK;
+
+	if (strlen(strUtf8)>=COLLENGTH)
+	{
+		memcpy(str,strUtf8,COLLENGTH-1);
+		str[COLLENGTH-1] = 0;
+	}
+	else
+		strcpy_s(str, COLLENGTH,strUtf8);
+	delete[] wszGBK;
+	delete[] szGBK;
+	return str;
+}
+
+void CXmlAnalyzeClass::selectChildNode(TiXmlNode* pNode, int flg)  
 {
 	if(pNode == NULL)  
 	{  
@@ -301,8 +328,16 @@ void CXmlAnalyzeClass::selectChildNode(TiXmlNode* pNode)
 						pParentStr = pChildNode->ToElement()->GetText();
 						if(pParentStr != NULL)
 						{
-							option = std::string(pParentStr);
-							optionInfo.option = option;
+							if(flg == 0){
+								option = std::string(pParentStr);
+								optionInfo.option = option;
+							}
+							else{
+								char str[COLLENGTH] = {0};
+								option = std::string(ConvertUtf8ToGBK(pParentStr, str));
+								optionInfo.option = option;
+							}
+							
 						}
 					}
 				}
@@ -313,7 +348,7 @@ void CXmlAnalyzeClass::selectChildNode(TiXmlNode* pNode)
 		{
 			for (pChildNode = pNode->FirstChild(); pChildNode && (pChildNode->Type() != TiXmlText::TINYXML_TEXT) ; pChildNode = pChildNode->NextSibling())
 			{
-				selectChildNode(pChildNode);
+				selectChildNode(pChildNode, flg);
 			}
 		}
 	}
@@ -480,12 +515,12 @@ void  CXmlAnalyzeClass::GetDbFlawNum(TiXmlNode* pRootNode)
 }
 
 
-int CXmlAnalyzeClass::GetItemCode(TiXmlElement* root, int toolType)
+int CXmlAnalyzeClass::GetItemCode(TiXmlElement* root, int toolType, int flg)
 {
 	TiXmlNode *pNode = root;
 	TiXmlNode *pSelectNode = NULL;
 	m_OptionInfo.clear();
-	selectChildNode(pNode);
+	selectChildNode(pNode, flg);
 
 	if(toolType == DBTOOL_WZAQ_M)
 	{
@@ -559,13 +594,13 @@ int CXmlAnalyzeClass::GetItemCodeWeakPwd(TiXmlElement* root)
 	return 0;
 }
 
-int CXmlAnalyzeClass::GetItemCodeBd(TiXmlElement* root)
+int CXmlAnalyzeClass::GetItemCodeBd(TiXmlElement* root, int flg)
 {
 
 	TiXmlNode *pNode = root;
 	//TiXmlNode *pSelectNode = NULL;
 	m_OptionInfo.clear();
-	selectChildNode(pNode);
+	selectChildNode(pNode, flg);
 
 	vector<OptionInfo>::iterator ite;
 	bool bFlg1 = false;
@@ -598,13 +633,13 @@ int CXmlAnalyzeClass::GetItemCodeBd(TiXmlElement* root)
 	return 0;
 }
 
-int CXmlAnalyzeClass::GetItemCodeMm(TiXmlElement* root)
+int CXmlAnalyzeClass::GetItemCodeMm(TiXmlElement* root, int flg)
 {
 
 	TiXmlNode *pNode = root;
 	//TiXmlNode *pSelectNode = NULL;
 	m_OptionInfo.clear();
-	selectChildNode(pNode);
+	selectChildNode(pNode, flg);
 
 	vector<OptionInfo>::iterator ite;
 	bool bFlg1 = false;
@@ -637,13 +672,13 @@ int CXmlAnalyzeClass::GetItemCodeMm(TiXmlElement* root)
 	return 0;
 }
 
-int CXmlAnalyzeClass::GetItemCodeWebshell(TiXmlElement* root)
+int CXmlAnalyzeClass::GetItemCodeWebshell(TiXmlElement* root, int flg)
 {
 
 	TiXmlNode *pNode = root;
 	//TiXmlNode *pSelectNode = NULL;
 	m_OptionInfo.clear();
-	selectChildNode(pNode);
+	selectChildNode(pNode, flg);
 
 	vector<OptionInfo>::iterator ite;
 	bool bFlg1 = false;
@@ -763,7 +798,7 @@ int CXmlAnalyzeClass::GetItemCodeWebshell(TiXmlElement* root)
 }
 
 
-int CXmlAnalyzeClass::GetXmlData(TiXmlElement* root, int nToolType)
+int CXmlAnalyzeClass::GetXmlData(TiXmlElement* root, int nToolType, int flg)
 {
 	if(nToolType == DBTOOL_WEAKPWD_M)
 	{
@@ -771,19 +806,19 @@ int CXmlAnalyzeClass::GetXmlData(TiXmlElement* root, int nToolType)
 	}
 	else if(nToolType == DBTOOL_BD_M)
 	{
-		GetItemCodeBd(root);
+		GetItemCodeBd(root, flg);
 	}
 	else if(nToolType == DBTOOL_MM_M)
 	{
-		GetItemCodeMm(root);
+		GetItemCodeMm(root, flg);
 	}
 	else if(nToolType == DBTOOL_WBESHEEL_M)
 	{
-		GetItemCodeWebshell(root);
+		GetItemCodeWebshell(root, flg);
 	}
 	else
 	{
-		GetItemCode(root, nToolType);
+		GetItemCode(root, nToolType, flg);
 	}
 	return 0;
 }
@@ -1090,7 +1125,7 @@ int ReDefiCheckPoint(int value)
 }
 
 //获取sag
-char* CXmlAnalyzeClass::GetSag(char* strSysGuid, char *sag)
+char* CXmlAnalyzeClass::GetSag(char* strSysGuid, char* sag)
 {
 	DB_RESULT	result;
 	DB_ROW		row;
@@ -1393,6 +1428,14 @@ int CXmlAnalyzeClass::ImportCheckXml(char* xmlfile, char* htmlpath, int type)
 		return -2;
 	}
 
+	TiXmlDeclaration* decl = doc.FirstChild()->ToDeclaration(); 
+	const char *pEncode = decl->Encoding();
+	int iE = 0;
+	if(!_stricmp(pEncode, "utf-8")){
+		iE = 1;
+	}
+
+
 	XmlToolInfo xmlToolInfo;
 	do{
 
@@ -1427,11 +1470,12 @@ int CXmlAnalyzeClass::ImportCheckXml(char* xmlfile, char* htmlpath, int type)
 		char sagstr[20] = {0};
 		char* sag = GetSag(xmlToolInfo.strSysGuid, sagstr);
 
+		
 		//strcpy_s(sagstr, 20, sag);
-		//printf("%s\n", sag);
+
 		int nToolType = xmlToolInfo.toolType;
 
-		GetXmlData(root, nToolType);
+		GetXmlData(root, nToolType, iE);
 		ItemcodeResultToDb(root, xmlToolInfo, sag);
 
 		//转html

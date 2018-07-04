@@ -27,6 +27,8 @@ using namespace std;
 
 #define XML_MAX_DSTIP_LEN		320
 
+#define  COLLENGTH   4000
+
 typedef struct T_XML_TOOLINFO{
 	int toolType;
 	char toolTypeStr[20];
@@ -84,30 +86,32 @@ public:
 	int GetUToolType(TiXmlElement* root, XmlToolInfo &xmlToolInfo, char* xmlfile);
 	int GetToolType(TiXmlElement* root, XmlToolInfo &xmlToolInfo);
 	void StrtokCode(XmlToolInfo& xmlToolInfo);
-	int GetItemCode(TiXmlElement* root, int nToolType);
-	int GetXmlData(TiXmlElement* root, int nToolType);
+	int GetItemCode(TiXmlElement* root, int nToolType, int flg);
+	int GetXmlData(TiXmlElement* root, int nToolType, int flg);
 	int ImportCheckXml(char* xmlfile, char* htmlpath, int type);
-	void selectChildNode(TiXmlNode* pNode);
+	void selectChildNode(TiXmlNode* pNode, int flg);
 	void GetDbFlawNum(TiXmlNode* pRootNode);
 	void GetXtldFlawNum(TiXmlNode* pRootNode);
 	void GetWebFlawNum(TiXmlNode* pRootNode);
 	void FindItemNumber(ToolFlawNum *pToolflaw, const char* pItemNumber, const char* pSum);
 	int GetItemCodeWeakPwd(TiXmlElement* root);
-	int GetItemCodeMm(TiXmlElement* root);
-	int GetItemCodeWebshell(TiXmlElement* root);
-	int GetItemCodeBd(TiXmlElement* root);
+	int GetItemCodeMm(TiXmlElement* root, int flg);
+	int GetItemCodeWebshell(TiXmlElement* root, int flg);
+	int GetItemCodeBd(TiXmlElement* root, int flg);
 	void selectChildNodeWeakPwd(TiXmlNode* pNode);
 
 	void CheckPoint(int checkType);
 	int SpeCheckResultJudge(char szCheckResult[32], CHECK_RESULT_DESC2 **pckRtDesc);
 	int SysCheckResultJudge(char szCheckResult[32], char szSAG[16], CHECK_RESULT_DESC2 **pckRtDesc);
-	char* GetSag(char* strSysGuid, char *sag);
+	char* GetSag(char* strSysGuid, char* sag);
 	int SAGCompare(int s, int a, int g);
 	int ItemcodeResultToDb(TiXmlElement* root, XmlToolInfo xmlToolInfo, char* sag);
 	void LocateItemCode_ResultTable(int toolType, char *sag, bool isWeb);
 	int initDb();
 	int uninitDb();
 	int PlanIsExist(XmlToolInfo xmlToolInfo);
+
+	char* ConvertUtf8ToGBK(const char* strUtf8, char* str);
 
 public:
 	vector<OptionInfo> m_OptionInfo;
