@@ -165,7 +165,7 @@ int	t_db_connect(struct db_conn_t *con, char *host, char *user, char *password, 
 
 	if (NULL == mysql_real_connect(con->conn, host, user, password, dbname, port, dbsocket, CLIENT_MULTI_STATEMENTS))
 	{
-		zlog_error(z_cate,"????mysql?§°?. ????????: %s ?í?ó?è??:%s", dbname, mysql_error(con->conn));
+		zlog_error(z_cate,"连接mysql失败. 数据库名: %s 错误描述:%s", dbname, mysql_error(con->conn));
 		ret = T_DB_FAIL;
 	}
 
@@ -184,7 +184,7 @@ int	t_db_connect(struct db_conn_t *con, char *host, char *user, char *password, 
 
 	if (T_DB_OK == ret && 0 != mysql_select_db(con->conn, dbname))
 	{
-		zlog_error(z_cate,"????mysql?§°?. ????????: %s ?í?ó?è??:%s", dbname, mysql_error(con->conn));
+		zlog_error(z_cate,"连接mysql失败. 数据库名: %s 错误描述:%s", dbname, mysql_error(con->conn));
 		ret = T_DB_FAIL;
 	}
 
@@ -301,7 +301,7 @@ DB_RESULT	t_db_vselect(struct db_conn_t *con, const char *fmt, va_list args)
 	{
 		if (0 != mysql_query(con->conn, sql))
 		{
-			zlog_error(z_cate, "???????é???í?ó.?í?ó?è??:%s. sql????:%s", mysql_error(con->conn), sql);
+			zlog_error(z_cate, "数据库查询错误.错误描述:%s. sql语句:%s", mysql_error(con->conn), sql);
 			DBfree_result(result);
 			result = (SUCCEED == is_recoverable_mysql_error(con) ? (DB_RESULT)T_DB_DOWN : NULL);
 		}
@@ -369,7 +369,7 @@ int	t_db_vexecute(struct db_conn_t *con, const char *fmt, va_list args)
 	{
 		if (0 != (status = mysql_query(con->conn, sql)))
 		{
-			zlog_error(z_cate, "??????????×÷?í?ó ?í?ó?è??:%s, sql????:%s", mysql_error(con->conn), sql);
+			zlog_error(z_cate, "执行数据操作错误 错误描述:%s, sql语句:%s", mysql_error(con->conn), sql);
 			ret = (SUCCEED == is_recoverable_mysql_error(con) ? T_DB_DOWN : T_DB_FAIL);
 		}
 		else
@@ -387,7 +387,7 @@ int	t_db_vexecute(struct db_conn_t *con, const char *fmt, va_list args)
 				/* more results? 0 = yes (keep looping), -1 = no, >0 = error */
 				if (0 < (status = mysql_next_result(con->conn)))
 				{
-					zlog_error(z_cate, "?????????????í.?í?ó?è??%s sql????:%s", mysql_error(con->conn), sql);
+					zlog_error(z_cate, "获取记录集出错.错误描述%s sql语句:%s", mysql_error(con->conn), sql);
 					ret = (SUCCEED == is_recoverable_mysql_error(con) ? T_DB_DOWN : T_DB_FAIL);
 				}
 			}
