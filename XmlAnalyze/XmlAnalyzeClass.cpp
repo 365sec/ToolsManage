@@ -1371,14 +1371,14 @@ int CXmlAnalyzeClass::ItemcodeResultToDb(TiXmlElement* root, XmlToolInfo xmlTool
 				 ReDefiCkRt = ReDefiCheckPoint(dwCkRt);
 				 if(dwCkRt != CHECK_RESULT_UNKNOWN)
 				 {
-					 DBexecute(con, "replace into itemcode_result (plan_guid, system_guid, asset_guid, itemcode, result, res_string) values ('%s', '%s', '%s', '%s', '%s', '%s');",
-						 xmlToolInfo.strPlanGuid, xmlToolInfo.strSysGuid, xmlToolInfo.strAssetGuid, pckRtDesc->strLayer4Type, ReDefiCkRt, ic.option);
+					 DBexecute(con, "replace into itemcode_result (plan_guid, system_guid, asset_guid, itemcode, result, res_string) values ('%s', '%s', '%s', '%s', %d, '%s');",
+						 xmlToolInfo.strPlanGuid, xmlToolInfo.strSysGuid, xmlToolInfo.strAssetGuid, pckRtDesc->strLayer4Type, ReDefiCkRt, ic.option.c_str());
 				 }
 				 if (dwCkRt != CHECK_RESULT_CONFORM && dwCkRt != CHECK_RESULT_INADEQUACY)
 					 ++nTtlNo;
 			 }
 			LocateItemCode_ResultTable(nToolType, sag, true);
-			DBexecute(con, "UPDATE t_plan_result w, itemcode_result t SET w.result_Check = t.result,w.is_Tool=1 , w.tool_result_counts = t.sum WHERE t.itemcode = w.item_Code AND t.asset_guid = w.asset_Guid AND t.plan_guid = w.plan_Guid AND t.system_guid = w.rec_Sys_Guid;");
+			DBexecute(con, "UPDATE t_plan_result w, itemcode_result t SET w.result_Check = t.result,w.is_Tool=1 , w.tool_result_counts = t.sum WHERE t.itemcode = w.item_Code AND  w.asset_Guid IS NULL AND t.plan_guid = w.plan_Guid AND w.rec_Sys_Guid IS NULL;");
 		}
 		
 	} while (0);
@@ -1394,8 +1394,19 @@ int CXmlAnalyzeClass::PlanIsExist(XmlToolInfo xmlToolInfo)
 	DB_RESULT	result;
 	DB_ROW		row;
 	int res = 0;
-	result = DBselect(con, "SELECT * from t_plan_tool WHERE plan_Guid ='%s' AND asset_Guid ='%s' AND tool_Type='%s';",
-		xmlToolInfo.strPlanGuid, xmlToolInfo.strAssetGuid, xmlToolInfo.toolTypeStr);
+
+	if((strcmp(xmlToolInfo.strSysGuid, "0") != 0) && (strlen(xmlToolInfo.strSysGuid)!=0))
+	{
+		result = DBselect(con, "SELECT * from t_plan_tool WHERE plan_Guid ='%s' AND asset_Guid ='%s' AND tool_Type='%s';",
+			xmlToolInfo.strPlanGuid, xmlToolInfo.strAssetGuid, xmlToolInfo.toolTypeStr);
+	}
+	else
+	{
+		result = DBselect(con, "SELECT * from t_plan_tool WHERE plan_Guid ='%s' AND asset_Guid IS NULL AND tool_Type='%s';",
+			xmlToolInfo.strPlanGuid,  xmlToolInfo.toolTypeStr);
+	}
+
+	
 	if(NULL == (row = DBfetch(result)))
 	{
 		res = 0;
@@ -1448,11 +1459,13 @@ int CXmlAnalyzeClass::ImportCheckXml(char* xmlfile, char* htmlpath, int type)
 				break;
 			}
 		}
-		
-		if (0 != GetToolType(root, xmlToolInfo)) //通过解析XML获得
-		{
-			nErr = -11;
-			break;
+		else{
+			if (0 != GetToolType(root, xmlToolInfo)) //通过解析XML获得
+			{
+				nErr = -11;
+				break;
+			}
+
 		}
 
 		if(type == 1)
@@ -1541,8 +1554,17 @@ int CXmlAnalyzeClass::ImportCheckXml(char* xmlfile, char* htmlpath, int type)
 		}
 	}
 
-	DBexecute(con, "UPDATE t_plan_tool SET tool_Result_Xml_Path = '%s', tool_Result_Html_Path='%s', tool_Result=1 , errorcode=%d , notice=0 WHERE plan_Guid ='%s' AND asset_Guid ='%s' AND tool_Type='%s';",
-		xmlfile, htmlfile, nErr, xmlToolInfo.strPlanGuid, xmlToolInfo.strAssetGuid, xmlToolInfo.toolTypeStr);
+	if((strcmp(xmlToolInfo.strSysGuid, "0") != 0) && (strlen(xmlToolInfo.strSysGuid)!=0))
+	{
+		DBexecute(con, "UPDATE t_plan_tool SET tool_Result_Xml_Path = '%s', tool_Result_Html_Path='%s', tool_Result=1 , errorcode=%d , notice=0 WHERE plan_Guid ='%s' AND asset_Guid ='%s' AND tool_Type='%s';",
+			xmlfile, htmlfile, nErr, xmlToolInfo.strPlanGuid, xmlToolInfo.strAssetGuid, xmlToolInfo.toolTypeStr);
+	}
+	else
+	{
+		DBexecute(con, "UPDATE t_plan_tool SET tool_Result_Xml_Path = '%s', tool_Result_Html_Path='%s', tool_Result=1 , errorcode=%d , notice=0 WHERE plan_Guid ='%s' AND asset_Guid IS NULL AND tool_Type='%s';",
+			xmlfile, htmlfile, nErr, xmlToolInfo.strPlanGuid, xmlToolInfo.toolTypeStr);
+	}
+	
 
 	root->Clear();
 	doc.Clear();
